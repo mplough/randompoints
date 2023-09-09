@@ -1,12 +1,9 @@
 # Generates random points that are a at least a minimum distance apart.
-# Uses rejection sampling.  Currently the rejection is performed naively.
+# Uses rejection sampling.  The rejection is performed naively.
 # Each candidate point is checked against all previously accepted points,
 # leading to a run time complexity of O(n^2).
 #
 # See random_points_quadtree.py for an algorithmically faster implementation.
-#
-# There are probably better ways to do this than rejection sampling.
-# I'd like to look into those ways at some point.
 
 import csv
 import random

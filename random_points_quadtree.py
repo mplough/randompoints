@@ -2,9 +2,6 @@
 # rejection sampling.  The rejection is performed with the aid of a quadtree,
 # which greatly increases the speed over the naive version.  The run time
 # complexity is O(n log n), rather than O(n^2).
-#
-# There are probably better ways to do this than rejection sampling.
-# I'd like to look into those ways at some point.
 
 import csv
 import random
@@ -157,7 +154,7 @@ def generate_points(
     tree = QuadtreeNode(boundary)
 
     while tries < max_tries and len(points) < n_points:
-        if tries % (max_tries / 100) == 0:
+        if tries % 10_000 == 0:
             print(f"tried {tries}, have {len(points)} / {n_points}")
         x = random.uniform(min_x, max_x)
         y = random.uniform(min_y, max_y)
@@ -193,23 +190,42 @@ def make_plot(
 *,
     points: list[Point],
     filename: Path,
-    min_x: float = 0,
-    max_x: float = 100,
-    min_y: float = 0,
-    max_y: float = 100,
+    min_x: float,
+    max_x: float,
+    min_y: float,
+    max_y: float,
     marker_size: float = 1,
 ):
+    print(f"Writing plot to {filename} ...")
+
     import matplotlib.pyplot as plt
+    from mpl_toolkits.axes_grid1 import Divider, Size
 
-    fig, ax = plt.subplots(
-        figsize=(inches_from_mm(max_x-min_x), inches_from_mm(max_y-min_y))
-    )
+    # axes with a fixed physical size
+    # see https://matplotlib.org/stable/gallery/axes_grid1/demo_fixed_size_axes.html
 
+    x_inches = inches_from_mm(max_x - min_x)
+    y_inches = inches_from_mm(max_y - min_y)
+
+    fig = plt.figure(figsize=(x_inches, y_inches))
+
+    # The first items are for padding and the second items are for the axes.
+    # sizes are in inch.
+    h = [Size.Fixed(0), Size.Fixed(x_inches)]
+    v = [Size.Fixed(0), Size.Fixed(y_inches)]
+    divider = Divider(fig, (0, 0, 1, 1), h, v, aspect=False)
+
+    # The width and height of the rectangle are ignored.
+    ax = fig.add_axes(divider.get_position(),
+                      axes_locator=divider.new_locator(nx=1, ny=1))
+
+    # markers: https://matplotlib.org/stable/gallery/lines_bars_and_markers/marker_reference.html#filled-markers
     ax.scatter(
         x=[p.x for p in points],
         y=[p.y for p in points],
         s=points_from_mm(marker_size)**2,
         c="black",
+        marker="o",
         edgecolor="none",
     )
 
@@ -218,8 +234,6 @@ def make_plot(
         ylim=(min_y, max_y),
     )
 
-    #ax.legend()
-    #ax.grid(True)
     fig.patch.set_visible(False)
     ax.axis('off')
 
@@ -242,21 +256,29 @@ def test():
         print(p)
 
 
+def n_points_from_density(x, y, points_per_100x100: float):
+    area = x * y
+    unit_area = 100 * 100
+    return int(points_per_100x100 * area / unit_area)
+
+
 @click.command
 @click.option(
     "--points-filename",
-    required=True,
     type=click_pathlib.Path(exists=False),
 )
 @click.option(
     "--n-points",
     type=int,
-    default=10_000,
+)
+@click.option(
+    "--points-per-100x100",
+    type=int,
 )
 @click.option(
     "--min-dist",
-    required=True,
     type=float,
+    default=1.0
 )
 @click.option(
     "--min-x",
@@ -295,6 +317,7 @@ def click_main(
     points_filename,
     min_dist,
     n_points,
+    points_per_100x100,
     min_x,
     max_x,
     min_y,
@@ -303,8 +326,20 @@ def click_main(
     plot_filename,
     marker_size,
 ):
+    if points_filename is None and plot_filename is None:
+        raise ValueError("No output formats specified")
+
     if random_seed is not None:
         random.seed(random_seed)
+
+    if points_per_100x100 is not None:
+        n_points = n_points_from_density(
+            max_x - min_x,
+            max_y - min_y,
+            points_per_100x100
+        )
+    if n_points is None:
+        raise ValueError("number of points was not specified")
 
     points = generate_points(
         min_dist=min_dist,
@@ -314,7 +349,9 @@ def click_main(
         min_y=min_y,
         max_y=max_y,
     )
-    write_points(points, points_filename)
+
+    if points_filename is not None:
+        write_points(points, points_filename)
 
     if plot_filename is not None:
         make_plot(
