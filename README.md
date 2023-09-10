@@ -11,7 +11,7 @@ run time complexity of O(n^2), where n is the number of points generated.
 previously generated points.  This data structure improves run time complexity
 to O(n log n).
 
-Next up: stratified sampling.  See https://inst.eecs.berkeley.edu/~cs294-13/fa09/lectures/course29sig01.pdf and https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=4b29674656bbf4067f23f0c24fe1b2e7ae198d7f
+# Use
 
 ## Setup
 
@@ -34,3 +34,20 @@ python random_points_quadtree.py \
     --min-dist 0.4 \
     --points-per-100x100 30000
 ```
+
+# Next areas to explore
+
+## Quasi-Monte Carlo (QMC) methods
+
+* https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/monte-carlo-methods-in-practice/introduction-quasi-monte-carlo.html
+
+## Poisson disc sampling
+
+* https://www.jasondavies.com/poisson-disc/
+* O(n) algorithm for this. https://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph07-poissondisk.pdf
+* Original Cook paper.  What he calls "jittered sampling" is now normally called "stratified sampling". http://www.cs.cmu.edu/afs/cs/academic/class/15462-s15/www/lec_slides/p51-cook.pdf
+
+## Blue noise sampling
+
+* https://blog.demofox.org/2017/10/20/generating-blue-noise-sample-points-with-mitchells-best-candidate-algorithm/
+* https://blog.demofox.org/2017/05/29/when-random-numbers-are-too-random-low-discrepancy-sequences/
